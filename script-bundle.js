@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         GC Keyboard Controls Bundle ALPHA
+// @name         Keyboard Controls ALPHA
 // @namespace    grundos-cafe
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=grundos.cafe
-// @version      0.4
+// @version      0.5
 // @description  Adds keyboard controls around GC
 // @author       Z & Dij & Berna & Kait & mox
 // @match        https://www.grundos.cafe/faerieland/employ/*
@@ -19,6 +19,7 @@
 // @match        https://www.grundos.cafe/games/gormball/*
 // @match        https://www.grundos.cafe/games/bilgedice/*
 // @match        https://www.grundos.cafe/games/*slots/*
+// @match        https://www.grundos.cafe/games/snowwars*
 // @match        https://www.grundos.cafe/medieval/kissthemortog/
 // @match        https://www.grundos.cafe/dome/1p/*battle/
 // @match        https://www.grundos.cafe/adopt/*
@@ -63,139 +64,141 @@ const questOverrideActions = [ // digit key: link to quest
 //////////////////////////////////////////////////////////////////////////
 /* globals $ */
 
-//initialize kait's Bilge Dice, KTM, SS enhancements
+//initialize kait's Bilge Dice, KTM, SS enhancements + Dij's & Mox's SW enhancements
 if (location.pathname.match(/bilgedice/)) bilgeDice();
 if (location.pathname.match(/kissthemortog/)) kissTheMortog();
 if (location.pathname.match(/slots/)) scorchySlots();
+if (location.pathname.match(/snowwars/)) snowWars();
 
- window.addEventListener("keydown", (event) => {
-     if(event.target.matches("input[type='text']")) {return;} //if entering text in a text box, don't record keydown event
-     let arrowKeyCount = 0;
-     let digitKeyCount = 0; //initialize some useful variables
-        switch (event.code) {
-			case "Space":
-                event.preventDefault(); 
-			    if (location.pathname.match(/bilgedice\/play/)) {
-                    bilgeDice('Space'); break; //prevent fall-through when playing Bilge Dice since Space is used differently
-                } else if (location.pathname.match(/slots/)) {
-                    scorchySlots('Space'); break; //prevent fall-through when playing Scorchy Slots since Space is used differently
-                } //falls through so Space can be used like Enter
-            case "Enter": //falls through so either Enter key can be used interchangeably
-            case "NumpadEnter":
-                if (location.pathname.match(/safetydeposit/)) {
-                    const SDBrmOne = document.querySelector("a.sdb-remove-one-text");
-                    if (SDBrmOne) SDBrmOne.click();
-                } else if (location.pathname.match(/market\/browseshop/)) {
-                    const USbuy = document.querySelector("#searchedItem.shop-item input[type='image']");
-                    if (USbuy) USbuy.click();
-                } else if (location.pathname.match(/market\/wizard/)) {
-                    const SWsearch = document.querySelector("div.sw_search_submit input.form-control");
-                    const SWshop = document.querySelector(".market_grid.sw_results .data a:nth-child(1)");
-                    if (SWsearch) SWsearch.click();
-                    else if (SWshop) SWshop.click();
-                } else if (location.pathname.match(/halloween|island|winter/)) {
-                    const questStart = document.getElementById("page_content").querySelector("form[action*='accept'] .form-control");
-                    const questComplete = document.getElementById("page_content").querySelector(".form-control[onclick*='complete']");
-                    const questRestart = document.getElementById("page_content").querySelector(".form-control:not([value*='Return'])");
-                    if (questStart) questStart.click();
-                    else if (questComplete) questComplete.click();
-                    else if (questRestart) questRestart.click();
-					else {window.location.reload();} //refresh failed quest
-                } else if (location.pathname.match(/dicearoo/)) {
-                    const dicearooRA = document.querySelector("form[id='roll-again'] > input[type='submit']");
-                    const dicearooPM = document.querySelector("input[value='Press Me']");
-                    const dicearooPlay = document.querySelector("form[action*='play_dicearoo'] > input[type='submit']");
-                    if (dicearooPlay) dicearooPlay.click();
-                    else if (dicearooRA) dicearooRA.click();
-                    else if (dicearooPM) dicearooPM.click();
-                } else if (location.pathname.match(/dome\/1p/)) {
-                    const BDgo = document.querySelector("input[value='Go!']:not(.ignore-button-size)");
-                    const BDnext = document.querySelector("input[value='Next']");
-                    const BDrematch = document.querySelector("input[value='Rematch!']");
-                    if (BDgo) BDgo.click();
-                    else if (BDnext) BDnext.click();
-                    else if (BDrematch) BDrematch.click();
-                } else if (location.pathname.match(/adopt/)) {
-                    const adoptNext = document.querySelector("input[value='Find a Neopet at Random']");
-                    if (adoptNext) adoptNext.click();
-                } else if (location.pathname.match(/gormball/)) {
-                    let chooseAGorm = $(`.gormball_player[data-id="${gormPlayer}"]`);
-                    const playAGorm = $("input[value='Next >>>'], input[value='Throw!'], input[value='Continue!']");
-                    if (chooseAGorm) chooseAGorm.click();
-                    if (playAGorm) {$("select[name='turns_waited']").prop('selectedIndex', gormWait-1); playAGorm.click();}
-                } else if (location.pathname.match(/bilgedice/)) { bilgeDice('Enter');
-				} else if (location.pathname.match(/kissthemortog/)) {kissTheMortog('Enter');
-                } else if (location.pathname.match(/slots/)) {scorchySlots('Enter');
-				} break;
-            case "ArrowDown":
-                arrowKeyCount++; //falls through, select the fourth item with down arrow
-            case "ArrowRight":
-                arrowKeyCount++; //falls through, select the third item with right arrow
-            case "ArrowUp":
-                arrowKeyCount++; //falls through, select the second item with up arrow
-            case "ArrowLeft":
-                arrowKeyCount++; //select the first item with left arrow
-                if (location.pathname.match(/halloween|island|winter|faerieland/) && arrowKeyCount <= document.querySelector(".itemList").childElementCount) {
-                    let itemInInv = document.querySelector(`.itemList .shop-item:nth-child(${arrowKeyCount}) img.search-helper-in-inv`);
-                    let itemInSDB = document.querySelector(`.itemList .shop-item:nth-child(${arrowKeyCount}) img.search-helper-sdb-exists`);
-                    if (itemInInv) {
-                        console.log("since the item is already in your inv, you don't need to search anywhere for it!");
-                        break;
-                    }
-                    else if (itemInSDB) { //if the item already exists in your SDB, click that icon to get it
-                        itemInSDB.click();
-                    } else { //if neither, search it on the SW
-                        document.querySelector(`.itemList .shop-item:nth-child(${arrowKeyCount}) img.search-helper-sw`).click();
-                    }
-                } break;
-            case "Digit0":
-                digitKeyCount++; //falls through
-            case "Digit9":
-                digitKeyCount++; //falls through
-            case "Digit8":
-                digitKeyCount++; //falls through
-            case "Digit7":
-                digitKeyCount++; //falls through
-            case "Digit6":
-                digitKeyCount++; //falls through
-            case "Digit5":
-                digitKeyCount++; //falls through
-            case "Digit4":
-                digitKeyCount++; //falls through
-            case "Digit3":
-                digitKeyCount++; //falls through
-            case "Digit2":
-                digitKeyCount++; //falls through
-            case "Digit1":
-                if (location.pathname.match(/halloween|island|winter/) && questSidebarOverride && typeof questOverrideActions[digitKeyCount] != 'undefined') {
-					let keyCheck = parseInt(Object.keys(questOverrideActions[digitKeyCount])) - 1;
-                    if (digitKeyCount === keyCheck) window.location.assign(location.origin + Object.values(questOverrideActions[digitKeyCount]).toString());
-                    else {console.log("Your quest order settings are incorrect, please check them!"); break;}
-				} else if (location.pathname.match(/halloween|island|winter/) && !questSidebarOverride && digitKeyCount < document.querySelector(`div#aio_sidebar > .quests > .aioImg`).childElementCount) {
-                    let rankOrderDiv = document.querySelectorAll('.quests .aioImg div');
-                    let rankOrderList = Array.prototype.slice.call(rankOrderDiv).sort((a, b) => {
-                        var aOrder = a.getAttribute('style').match(/order:(\d+)/)[1]; var bOrder = b.getAttribute('style').match(/order:(\d+)/)[1]; if (aOrder > bOrder) return 1; if (aOrder < bOrder) return -1; return 0;})
-                    $(rankOrderList[digitKeyCount].firstChild.click());
-                } else if (location.pathname.match(/halloween|island|winter/) && questSidebarOverride && typeof questOverrideActions[digitKeyCount] == 'undefined') { console.log("You didn't assign anything to that key.");
-                } else if (location.pathname.match(/bilgedice/)) {
-					bilgeDice(digitKeyCount);
-				} else if (location.pathname.match(/slots/)) {
-					scorchySlots(digitKeyCount);
-				} break;
-        }
- });
- 
+window.addEventListener("keydown", (event) => {
+    if(event.target.matches("input[type='text']")) {return;} //if entering text in a text box, don't record keydown event
+    let arrowKeyCount = 0;
+    let digitKeyCount = 0; //initialize some useful variables
+    switch (event.code) {
+        case "Space":
+            event.preventDefault();
+            if (location.pathname.match(/bilgedice\/play/)) {
+                bilgeDice('Space'); break; //prevent fall-through when playing Bilge Dice since Space is used differently
+            } else if (location.pathname.match(/slots/)) {
+                scorchySlots('Space'); break; //prevent fall-through when playing Scorchy Slots since Space is used differently
+            } //falls through so Space can be used like Enter
+        case "Enter": //falls through so either Enter key can be used interchangeably
+        case "NumpadEnter":
+            if (location.pathname.match(/safetydeposit/)) {
+                const SDBrmOne = document.querySelector("a.sdb-remove-one-text");
+                if (SDBrmOne) SDBrmOne.click();
+            } else if (location.pathname.match(/market\/browseshop/)) {
+                const USbuy = document.querySelector("#searchedItem.shop-item input[type='image']");
+                if (USbuy) USbuy.click();
+            } else if (location.pathname.match(/market\/wizard/)) {
+                const SWsearch = document.querySelector("div.sw_search_submit input.form-control");
+                const SWshop = document.querySelector(".market_grid.sw_results .data a:nth-child(1)");
+                if (SWsearch) SWsearch.click();
+                else if (SWshop) SWshop.click();
+            } else if (location.pathname.match(/halloween|island|winter/)) {
+                const questStart = document.getElementById("page_content").querySelector("form[action*='accept'] .form-control");
+                const questComplete = document.getElementById("page_content").querySelector(".form-control[onclick*='complete']");
+                const questRestart = document.getElementById("page_content").querySelector(".form-control:not([value*='Return'])");
+                if (questStart) questStart.click();
+                else if (questComplete) questComplete.click();
+                else if (questRestart) questRestart.click();
+                else {window.location.reload();} //refresh failed quest
+            } else if (location.pathname.match(/dicearoo/)) {
+                const dicearooRA = document.querySelector("form[id='roll-again'] > input[type='submit']");
+                const dicearooPM = document.querySelector("input[value='Press Me']");
+                const dicearooPlay = document.querySelector("form[action*='play_dicearoo'] > input[type='submit']");
+                if (dicearooPlay) dicearooPlay.click();
+                else if (dicearooRA) dicearooRA.click();
+                else if (dicearooPM) dicearooPM.click();
+            } else if (location.pathname.match(/dome\/1p/)) {
+                const BDgo = document.querySelector("input[value='Go!']:not(.ignore-button-size)");
+                const BDnext = document.querySelector("input[value='Next']");
+                const BDrematch = document.querySelector("input[value='Rematch!']");
+                if (BDgo) BDgo.click();
+                else if (BDnext) BDnext.click();
+                else if (BDrematch) BDrematch.click();
+            } else if (location.pathname.match(/adopt/)) {
+                const adoptNext = document.querySelector("input[value='Find a Neopet at Random']");
+                if (adoptNext) adoptNext.click();
+            } else if (location.pathname.match(/gormball/)) {
+                let chooseAGorm = $(`.gormball_player[data-id="${gormPlayer}"]`);
+                const playAGorm = $("input[value='Next >>>'], input[value='Throw!'], input[value='Continue!']");
+                if (chooseAGorm) chooseAGorm.click();
+                if (playAGorm) {$("select[name='turns_waited']").prop('selectedIndex', gormWait-1); playAGorm.click();}
+            } else if (location.pathname.match(/bilgedice/)) { bilgeDice('Enter');
+            } else if (location.pathname.match(/kissthemortog/)) { kissTheMortog('Enter');
+            } else if (location.pathname.match(/slots/)) { scorchySlots('Enter');
+            } else if (location.pathname.match(/snowwars/)) {snowWars('Enter');
+            } break;
+        case "ArrowDown":
+            arrowKeyCount++; //falls through, select the fourth item with down arrow
+        case "ArrowRight":
+            arrowKeyCount++; //falls through, select the third item with right arrow
+        case "ArrowUp":
+            arrowKeyCount++; //falls through, select the second item with up arrow
+        case "ArrowLeft":
+            arrowKeyCount++; //select the first item with left arrow
+            if (location.pathname.match(/halloween|island|winter|faerieland/) && arrowKeyCount <= document.querySelector(".itemList").childElementCount) {
+                let itemInInv = document.querySelector(`.itemList .shop-item:nth-child(${arrowKeyCount}) img.search-helper-in-inv`);
+                let itemInSDB = document.querySelector(`.itemList .shop-item:nth-child(${arrowKeyCount}) img.search-helper-sdb-exists`);
+                if (itemInInv) {
+                    console.log("since the item is already in your inv, you don't need to search anywhere for it!");
+                    break;
+                }
+                else if (itemInSDB) { //if the item already exists in your SDB, click that icon to get it
+                    itemInSDB.click();
+                } else { //if neither, search it on the SW
+                    document.querySelector(`.itemList .shop-item:nth-child(${arrowKeyCount}) img.search-helper-sw`).click();
+                }
+            } break;
+        case "Digit0":
+            digitKeyCount++; //falls through
+        case "Digit9":
+            digitKeyCount++; //falls through
+        case "Digit8":
+            digitKeyCount++; //falls through
+        case "Digit7":
+            digitKeyCount++; //falls through
+        case "Digit6":
+            digitKeyCount++; //falls through
+        case "Digit5":
+            digitKeyCount++; //falls through
+        case "Digit4":
+            digitKeyCount++; //falls through
+        case "Digit3":
+            digitKeyCount++; //falls through
+        case "Digit2":
+            digitKeyCount++; //falls through
+        case "Digit1":
+            if (location.pathname.match(/halloween|island|winter/) && questSidebarOverride && typeof questOverrideActions[digitKeyCount] != 'undefined') {
+                let keyCheck = parseInt(Object.keys(questOverrideActions[digitKeyCount])) - 1;
+                if (digitKeyCount === keyCheck) window.location.assign(location.origin + Object.values(questOverrideActions[digitKeyCount]).toString());
+                else {console.log("Your quest order settings are incorrect, please check them!"); break;}
+            } else if (location.pathname.match(/halloween|island|winter/) && !questSidebarOverride && digitKeyCount < document.querySelector(`div#aio_sidebar > .quests > .aioImg`).childElementCount) {
+                let rankOrderDiv = document.querySelectorAll('.quests .aioImg div');
+                let rankOrderList = Array.prototype.slice.call(rankOrderDiv).sort((a, b) => {
+                    var aOrder = a.getAttribute('style').match(/order:(\d+)/)[1]; var bOrder = b.getAttribute('style').match(/order:(\d+)/)[1]; if (aOrder > bOrder) return 1; if (aOrder < bOrder) return -1; return 0;})
+                $(rankOrderList[digitKeyCount].firstChild.click());
+            } else if (location.pathname.match(/halloween|island|winter/) && questSidebarOverride && typeof questOverrideActions[digitKeyCount] == 'undefined') { console.log("You didn't assign anything to that key.");
+            } else if (location.pathname.match(/bilgedice/)) {
+                bilgeDice(digitKeyCount);
+            } else if (location.pathname.match(/slots/)) {
+                scorchySlots(digitKeyCount);
+            } break;
+    }
+});
+
 /////////////////// Bilge Dice (by Cupkait)
 async function bilgeDice (keyEntered) {
-  //initialize our win streak async functions for GM.setValue and GM.getValue [synchronous GM_s/getValue are deprecated]
+    //initialize our win streak async functions for GM.setValue and GM.getValue [synchronous GM_s/getValue are deprecated]
 	const BDSTORE = 'bilgedice-winstreak';
 	const getBDWinStreak = async () => { return await GM.getValue(BDSTORE); }
 	const bdWinStreak = await getBDWinStreak();
     //initialize winstreak in case of error or new install
     if (typeof bdWinStreak === 'undefined') {GM.setValue(BDSTORE, "Current win streak: ???");}
-  // initialize the checkboxes array, if possible
-	const bdCheckboxes = document.querySelectorAll('input[id*="roll_"]');
-  // add win streak text and/or instruct regarding checkboxes but ONLY ONCE
+    // initialize the checkboxes array, if possible
+    const bdCheckboxes = document.querySelectorAll('input[id*="roll_"]');
+    // add win streak text and/or instruct regarding checkboxes but ONLY ONCE
     if (!document.querySelector('#page_content').textContent.includes("Current win streak")) {
 		const bdWinStreakDiv = document.createElement('div');
         bdWinStreakDiv.textContent = `${bdWinStreak}`;
@@ -208,7 +211,7 @@ async function bilgeDice (keyEntered) {
         bdSpaceText.textContent= "(Use number keys to select or press spacebar to select all)";
         document.querySelector("#bilge-dice-user-wrapper > form").insertAdjacentElement('afterend', bdSpaceText);
     }
-  // on the front page, choose the ante automagically upon player pressing Enter
+    // on the front page, choose the ante automagically upon player pressing Enter
     let bilgeAnteCode = parseInt(bilgeAnteChoices.indexOf(bilgeAnteAmount)) + 1;
     if (!document.querySelector(`input[name="bet_${bilgeAnteCode}"]`) && document.querySelector(`input[name="bet_1"]`)) {
 		bilgeAnteCode = 1;
@@ -219,12 +222,12 @@ async function bilgeDice (keyEntered) {
             document.querySelector(`input[name="bet_${bilgeAnteCode}"]`).click();
         }
 	}
-  // on the front page, update the win streak and set it if possible
+    // on the front page, update the win streak and set it if possible
 	if (location.pathname.match(/bilgedice/) && !location.pathname.match(/play/) && !location.pathname.match(/results/)) {
 		const bdWinStreakElement = document.querySelector("#page_content div.center.mt-2 p");
 		const bdWinStreakTemp = bdWinStreakElement ? bdWinStreakElement.textContent : null;
 		if (bdWinStreakTemp) { GM.setValue(BDSTORE, bdWinStreakTemp); console.log("stored bilgedice-winstreak", bdWinStreakTemp); }
-      //if a number key is entered on this page, its relative ante position will be selected, if possible
+        //if a number key is entered on this page, its relative ante position will be selected, if possible
         if (typeof keyEntered === 'number') {
             bilgeAnteCode = 1 + keyEntered;
             if (document.querySelector(`input[name="bet_${bilgeAnteCode}"]`)) {
@@ -233,7 +236,7 @@ async function bilgeDice (keyEntered) {
 			}
         }
 	}
-  // in the play window, handle checkboxes with number keys/spacebar and the rest with enter
+    // in the play window, handle checkboxes with number keys/spacebar and the rest with enter
 	if (location.pathname.match(/bilgedice\/play/) || location.pathname.match(/bilgedice\/results/)) {
         if (typeof keyEntered === 'number' && keyEntered < bdCheckboxes.length) {
 			bdCheckboxes[keyEntered].checked = !bdCheckboxes[keyEntered].checked;
@@ -246,9 +249,9 @@ async function bilgeDice (keyEntered) {
 }
 /////////////////// Kiss The Mortog (by Cupkait)
 function kissTheMortog (keyEntered) {
-  //initialize the mortogs array, if possible
-	const mortogElements = document.querySelectorAll('#mortogs > div > form[action*="process_kissthemortog"]');
-  //on a win, check if player reached their selected prize pot value, alert them if so
+    //initialize the mortogs array, if possible
+    const mortogElements = document.querySelectorAll('#mortogs > div > form[action*="process_kissthemortog"]');
+    //on a win, check if player reached their selected prize pot value, alert them if so
 	if (document.querySelector('input[value="Continue"]')) {
         let ktmPrizePot = parseInt(document.querySelector('main p.center:nth-of-type(2) strong').innerText.match(/(\d+) NP/)[1]);
         if (ktmPrizePot >= mortogLimit && !Boolean(keyEntered)) {
@@ -256,11 +259,11 @@ function kissTheMortog (keyEntered) {
             document.querySelector('main form input.form-control[value*="Winnings"]').setAttribute("style", "background-color: IndianRed;");
         }
 	}
-  //process enter key functions
-	if (keyEntered === 'Enter') {
-	  //if there are mortogs, choose one based on user preferences
+    //process enter key functions
+    if (keyEntered === 'Enter') {
+        //if there are mortogs, choose one based on user preferences
 		if (mortogElements.length) {
-		    //random choice
+            //random choice
             if (mortogFavorite === "random") {
 				randomMortog();
 			//choose only first mortogs
@@ -277,42 +280,42 @@ function kissTheMortog (keyEntered) {
                 console.log("error in mortogFavorite selection, defaulting to random");
                 randomMortog();
             }
-	  //otherwise, select the play/next button
+        //otherwise, select the play/next button
 		} else document.querySelector('input[value="Continue"], input[value*="Try again"]').click();
 	}
-  //since we want to choose a random mortog in two circumstances, make it into a function
-	function randomMortog () {
-		const randomIndex = Math.floor(Math.random() * mortogElements.length);
+    //since we want to choose a random mortog in two circumstances, make it into a function
+    function randomMortog () {
+        const randomIndex = Math.floor(Math.random() * mortogElements.length);
         console.log("randomly chose mortog[" + randomIndex + "]");
-		mortogElements[randomIndex].submit();
+        mortogElements[randomIndex].submit();
 	}
 }
 /////////////////// Scorchy Slots (by Cupkait)
 async function scorchySlots (keyEntered) {
-  //initialize our collective winnnings async functions for GM.setValue and GM.getValue [synchronous GM_s/getValue are deprecated]
-	const SSSTORE = 'scorchyslots-winnings';
-	const getSSWinnings = async () => { return JSON.parse(await GM.getValue(SSSTORE, '{}')); }
-	const ssWinnings = await getSSWinnings();
-  // add winnings text but ONLY ONCE
+    //initialize our collective winnnings async functions for GM.setValue and GM.getValue [synchronous GM_s/getValue are deprecated]
+    const SSSTORE = 'scorchyslots-winnings';
+    const getSSWinnings = async () => { return JSON.parse(await GM.getValue(SSSTORE, '{}')); }
+    const ssWinnings = await getSSWinnings();
+    // add winnings text but ONLY ONCE
     if (!document.querySelector('#page_content').textContent.includes("Session winnings")) {
         const ssWinningsDiv = document.createElement('div');
         ssWinningsDiv.textContent = `${ssWinnings.session} / ${ssWinnings.total}\nDon't forget to go back to Scorchy Slots Home to update your total winnings after this session!`;
         ssWinningsDiv.setAttribute("style", "text-align: center; font-size: 10px; white-space: pre-wrap;");
         document.querySelector('#page_content').appendChild(ssWinningsDiv);
     }
-  //check if a random event is happening now
+    //check if a random event is happening now
     let randEvent = document.querySelector("#page_event div.re_text");
     let ssRENP = 0; //set the amount of NP it awarded/took away to 0 as default
     if (randEvent) {ssRENP = ssRandEvent(randEvent);} //run the random event function if an event did happen, which will return a +/- value of NP if applicable
-  //initialize NP on hand for tabulation of session NP changes
-	let npOnHand = parseInt(document.querySelector("#userinfo #on-hand-np").textContent.toString().replace(/,/g, ""));
-  //initialize storage of winnings in case of error or new install
+    //initialize NP on hand for tabulation of session NP changes
+    let npOnHand = parseInt(document.querySelector("#userinfo #on-hand-np").textContent.toString().replace(/,/g, ""));
+    //initialize storage of winnings in case of error or new install
     if (typeof ssWinnings.total === 'undefined' && !ssWinnings.total) {
-		let tempNewSSWinnings = {total: `Total winnings: 0 NP`, session: `Session winnings: 0 NP`, onhand: npOnHand};
+        let tempNewSSWinnings = {total: `Total winnings: 0 NP`, session: `Session winnings: 0 NP`, onhand: npOnHand};
         console.log("set scorchyslots-winnings", tempNewSSWinnings);
         GM.setValue(SSSTORE, JSON.stringify(tempNewSSWinnings));
     }
-  //on loading the main Scorchy Slots page, pass session winnings (or losses) into total, reset session value to 0
+    //on loading the main Scorchy Slots page, pass session winnings (or losses) into total, reset session value to 0
     if (location.pathname.match(/games\/slots/)) {
         let tempWinSession = parseInt(/(?<=gs: )([\d,-]+)(?= NP)/.exec(ssWinnings.session)[0].replace(/,/g, ""));
         let tempWinTotal = parseInt(/(?<=gs: )([\d,-]+)(?= NP)/.exec(ssWinnings.total)[0].replace(/,/g, ""));
@@ -321,22 +324,22 @@ async function scorchySlots (keyEntered) {
         console.log("set scorchyslots-winnings", tempNewSSWinnings);
         GM.setValue(SSSTORE, JSON.stringify(tempNewSSWinnings));
     }
-  //initialize the checkboxes hold array, if possible
-	const scorchyCheckboxes = document.querySelectorAll('#scorchy-hold input[name*="scorchy_hold_"]');
-  //when the user is prompted to hold...
-	if (scorchyCheckboxes.length) {
-	  //create the element containing instructions regarding checkboxes but ONLY ONCE
-		if (!document.querySelector('#page_content').textContent.includes("Select which reels to hold")) {
+    //initialize the checkboxes hold array, if possible
+    const scorchyCheckboxes = document.querySelectorAll('#scorchy-hold input[name*="scorchy_hold_"]');
+    //when the user is prompted to hold...
+    if (scorchyCheckboxes.length) {
+        //create the element containing instructions regarding checkboxes but ONLY ONCE
+        if (!document.querySelector('#page_content').textContent.includes("Select which reels to hold")) {
 			const ssSpaceText = document.createElement('p');
 			ssSpaceText.setAttribute("style", "height: auto; font-size: 10px; width: auto; font-weight: bold; text-align: center;");
 			ssSpaceText.textContent= "Select which reels to hold using number keys 1-4 or spacebar to select all";
 			document.querySelector("#scorchy-inner-wrapper > div#scorchy-hold.scorchy-row").insertAdjacentElement('beforebegin', ssSpaceText);
 		}
-	  //if a number key is pressed, select that # hold slot
+        //if a number key is pressed, select that # hold slot
 		if (typeof keyEntered === 'number' && keyEntered < scorchyCheckboxes.length) {
 			scorchyCheckboxes[keyEntered].checked = !scorchyCheckboxes[keyEntered].checked;
 			scorchyCheckboxes[keyEntered].dispatchEvent(new Event('change', { bubbles: true }));
-	  //if spacebar is pressed, select all
+        //if spacebar is pressed, select all
 		} else if (keyEntered === 'Space') {
 			scorchyCheckboxes.forEach(checkbox => {
 				checkbox.checked = !checkbox.checked;
@@ -344,11 +347,11 @@ async function scorchySlots (keyEntered) {
 			});
 		}
     }
-  //handle enter key usage
-	if (keyEntered === 'Enter') {
-      //while on the play page...
+    //handle enter key usage
+    if (keyEntered === 'Enter') {
+        //while on the play page...
         if (location.pathname.match(/play_slots/)) {
-          //...update the session NP based on values just prior to navigating to the next page (with enter)
+            //...update the session NP based on values just prior to navigating to the next page (with enter)
             let tempSessionWinnings = parseInt(/(?<=gs: )([\d,-]+)(?= NP)/.exec(ssWinnings.session)[0].replace(/,/g, ""));
             let onHandTemp = ssWinnings.onhand;
             let ssSessionTemp = npOnHand - onHandTemp + tempSessionWinnings + ssRENP;
@@ -359,7 +362,7 @@ async function scorchySlots (keyEntered) {
         } //this keeps values from updating with every checkbox entry
         document.querySelector('input[value="Click Here to Play"], input[value="Collect Winnings"], input[value="Play Again"]').click();
 	}
-  //handle random events that might occur on Scorchy Slots pages that affect NP values [WIP, still collecting text for applicable events]
+    //handle random events that might occur on Scorchy Slots pages that affect NP values [WIP, still collecting text for applicable events]
     function ssRandEvent (randEvent) {
         let reNP = 0;
         reNP = randEvent?.innerText?.match(/([\d,]+)(?= N?n?eopoints| NP| np)/)[0]?.replace(/,/g, "");
@@ -368,5 +371,113 @@ async function scorchySlots (keyEntered) {
             else if (/steal|appropriate|take|lose/.test(randEvent.innerText)) reNP = 0-reNP;
             return reNP;
         }
+    }
+}
+/////////////////// Snow Wars (by Dij)
+async function snowWars (keyEntered) {
+    const SWSTORE = 'snowwars-memory';
+    const getSWMemory = async () => { return JSON.parse(await GM.getValue(SWSTORE, '{}')); }
+    const swMemory = await getSWMemory();
+
+    var swClickSpots, swIndex;
+    const swBoard = document.querySelector("div.snowwars-board-container.flex");
+    if (swBoard && !swClickSpots) {swClickSpots = [...swBoard.querySelectorAll("div.snowwars-spot:not(.snowwars-axis) > a")].reduce((acc, cur) =>
+                                                          ({...acc, [cur.outerHTML.match(/(?<=Attack\(event, ')[\d]+(?='\)\")/)[0]]: cur}), 0);}
+    //initialize storage with new game, use 0 as first cell when enter is pressed
+    if (document.querySelector('#page_content').textContent.includes("Welcome to Snow Wars") || typeof swMemory.lastcell === 'undefined') {
+        console.log("storing",JSON.stringify({lastcell: 0, total: 0, bookmark: 0, flag: false, hitobj: {'2_1': +1, '8_1': +1, '2_2': +7, '8_2': +7, '2_3': +1, '8_3': +1, '2_4': -9, '8_4': -9, '5_1': +8, '5_2': -8, '6_1': +8, '6_2': -8, '7_1': +1, '7_2': +1, '7_3': -2}}));
+        await GM.setValue(SWSTORE, JSON.stringify({lastcell: 0, total: 0, bookmark: 0, flag: false, hitobj: {'2_1': +1, '8_1': +1, '2_2': +7, '8_2': +7, '2_3': +1, '8_3': +1, '2_4': -9, '8_4': -9, '5_1': +8, '5_2': -8, '6_1': +8, '6_2': -8, '7_1': +1, '7_2': +1, '7_3': -2}}));
+    }
+    //handle Enter key
+    if (keyEntered === 'Enter' && swClickSpots) {
+        if (swClickSpots[swMemory.lastcell]) swClickSpots[swMemory.lastcell].click();
+        else swBoard.querySelector(`div.snowwars-board-container.flex > a[onclick='${swMemory.lastcell}']`).click();
+    } else if (keyEntered === 'Enter') {
+        document.querySelector("input[value='Continue Game'], input[name='start_round']").click();
+    }
+///////////BEGIN NEXT MOVE PROCESSING CODE (including bookmark, flag, and hitobj in the storage values)
+    //if a "hit" img exists on the gameboard...
+    if (!keyEntered && swBoard && swMemory.flag && !swClickSpots[swMemory.lastcell]) {
+        let tempLast = swMemory.lastcell;
+        let tempObj = Object.assign({}, swMemory.hitobj);
+        //make an array of all the hit elements by their url code
+        const hitElements = [...swBoard.querySelectorAll("div.snowwars-spot[style*=snowwars/*.gif]")].map((element) =>
+                                     element.outerHTML.match(/(?<=games\/snowwars\/)([0-9snow_]+)(?=.gif)/)[0]);
+        const checkHitElement = hitElements.map((element) => {
+            if (Object.keys(tempObj).includes(element)) {
+                let tempHitNext = parseInt(tempObj[element]);
+                delete tempObj[element];
+                return tempHitNext;} else return "";}).filter(Boolean);
+        //if the new hit exists in the hitobj, see if it's a useful coord
+        if (typeof checkHitElement[0] === 'number') {
+            console.log("checkhitelement found something");
+            let newLast = tempLast + checkHitElement[0];
+            if (swClickSpots[newLast]) {
+                console.log("hit was useful, we have new coord: " + JSON.stringify(newLast));
+                console.log("storing",JSON.stringify({lastcell: newLast, total: swMemory.total, bookmark: swMemory.bookmark, flag: false, hitobj: tempObj}));
+                await GM.setValue(SWSTORE,JSON.stringify({lastcell: newLast, total: swMemory.total, bookmark: swMemory.bookmark, flag: false, hitobj: tempObj}));
+            } else {
+                console.log("hit was not useful, we already hit the new coord: " + JSON.stringify(newLast) + " go back to the bookmark: " + JSON.stringify(swMemory.bookmark));
+                console.log("storing",JSON.stringify({lastcell: swMemory.bookmark, total: swMemory.total, bookmark: swMemory.bookmark, flag: false, hitobj: tempObj}));
+                await GM.setValue(SWSTORE, JSON.stringify({lastcell: swMemory.bookmark, total: swMemory.total, bookmark: swMemory.bookmark, flag: false, hitobj: tempObj}));
+            }
+        } else {
+            console.log("hit was not useful");
+            console.log("storing5",JSON.stringify({lastcell: swMemory.bookmark, total: swMemory.total, bookmark: swMemory.bookmark, flag: false, hitobj: tempObj}));
+            await GM.setValue(SWSTORE, JSON.stringify({lastcell: swMemory.bookmark, total: swMemory.total, bookmark: swMemory.bookmark, flag: false, hitobj: tempObj}));
+        }
+    }
+///////////END NEXT MOVE PROCESSING CODE
+    //since the swMemory GM.getValue updates when the function is first called without a key at the top of this userscript, we will call our GM.getValue again into a new variable
+        // because we want the useless coordinates determined by the above function to be replaced with the checkerboard pattern function below
+    const checkAgain = await JSON.parse(await GM.getValue(SWSTORE, '{}'));
+    console.log("checkAgain", JSON.stringify(checkAgain));
+    //on the gameboard page if no useful hit was recorded last round...
+    if (!keyEntered && swBoard && !checkAgain.flag && !swClickSpots[checkAgain.lastcell]) {
+        //find next play based on checkerboard grid
+        swIndex = checkAgain.lastcell;
+        console.log("pre-while", JSON.stringify(swIndex));
+        console.log(JSON.stringify(Boolean(swClickSpots[swIndex])));
+        while (!swClickSpots[swIndex] && swIndex < 48) {
+            swIndex = selectNextNum(swIndex);
+            console.log("in while", JSON.stringify(swIndex));
+            console.log(JSON.stringify(Boolean(swClickSpots[swIndex])));
+        }
+        if (swIndex >= 48) {
+            swIndex = 1;
+            while (!swClickSpots[swIndex] && swIndex < 48) {
+                swIndex = selectNextNum(swIndex);
+                console.log("in while", JSON.stringify(swIndex));
+                console.log(JSON.stringify(Boolean(swClickSpots[swIndex])));
+            }
+        }
+        console.log("found next spot", JSON.stringify(swIndex));
+        //store this value as the bookmark in case we get a hit, use checkAgain just in case
+        console.log("storing",JSON.stringify({lastcell: swIndex, total: checkAgain.total, bookmark: swIndex, flag: checkAgain.flag, hitobj: checkAgain.hitobj}));
+        await GM.setValue(SWSTORE, JSON.stringify({lastcell: swIndex, total: checkAgain.total, bookmark: swIndex, flag: checkAgain.flag, hitobj: checkAgain.hitobj}));
+    }
+    //on the "results page...
+    if (!keyEntered && !swBoard && document.querySelector("#page_content").textContent.includes("You fire at")) {
+        //store temporary values of the memory values for manipulation if needed
+        let tempTotal = 1 + swMemory.total;
+        let tempFlag = swMemory.flag;
+        let tempLast = swMemory.lastcell;
+        //check if the user clicked a value that was different from the one intended
+        let crossCheck = document.querySelector("#page_content").textContent.match(/(?<=You fire at )[A-F][0-9]+(?= - )/)[0].split("");
+        let crossCheckCoord = crossCheck[0].charCodeAt(0)-65+crossCheck[1]-1;
+        if (crossCheckCoord != swMemory.lastcell) {console.log("You clicked, didn't you! No matter."); tempLast = crossCheckCoord; }
+        //if a hit was recorded, activate the flag to process the next spot
+        if (document.querySelector("img[src*='hit.gif']")) {
+            console.log("hit! coord: " + JSON.stringify(swMemory.lastcell));
+            tempFlag = true;
+        }
+        console.log("storing7",JSON.stringify({lastcell: tempLast, total: tempTotal, bookmark: swMemory.bookmark, flag: tempFlag, hitobj: swMemory.hitobj}));
+        await GM.setValue(SWSTORE, JSON.stringify({lastcell: tempLast, total: tempTotal, bookmark: swMemory.bookmark, flag: tempFlag, hitobj: swMemory.hitobj}));
+    }
+    //make a checkerboard pattern on the gameboard
+    function selectNextNum (index) {
+        if (index % 8 == 7) {return index + 1;} //last of row, move to first of next row
+        else if (index % 8 == 6) {return index + 3;} //one before end of row, move to one after start of next row
+        else {return index + 2;} //otherwise, every other
     }
 }
